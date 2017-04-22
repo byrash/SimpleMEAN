@@ -1,0 +1,10 @@
+node_modules
+typings
+/app/**/*.js
+/app/**/*.map
+.vscode/
+.idea
+*.iml
+*.js
+*.map
+
