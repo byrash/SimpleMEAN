@@ -51,26 +51,41 @@ function getEvents(req, res, next) {
     });
 }
 function getEvent(req, res, next) {
-    Events.find({"id": req.params.id}).sort('id').exec(function (arr, data) {
+    Events.find({"id": req.params.id}).sort('id').exec(function (err, data) {
         res.setHeader('Access-Control-Allow-Origin', '*')
-        console.log(data[0]);
         res.send(data[0]);
     });
 }
 
-function postEvents(req, res, next) {
-    console.log(req.body);
-    new Events(JSON.parse(req.body)).save(function (err, doc) {
-        console.log(err);
-        console.log(doc);
-        res.send(JSON.parse(req.body));
-    });
+function postEvent(req, res, next) {
+    res.setHeader('Access-Control-Allow-Origin', '*')
+    var options = {upsert: true, new: true, setDefaultsOnInsert: true};
+    var event = JSON.parse(req.body);
+    if (!event.id) {
+        Events.count((err, count) => {
+            if (err) {
+                console.log('Error getting Count ' + err);
+                return;
+            }
+            event.id = count + 1;
+            new Events(event).save(function (err, doc) {
+                console.log("Error:" + err);
+                console.log(doc);
+            });
+        });
+    } else {
+        Events.findOneAndUpdate({"id": event.id}, event, options, function (err, doc) {
+            console.log("Error:" + err);
+            console.log(doc);
+        });
+    }
+    res.send(event);
 }
 
 // Set up our routes and start the server
 server.get('/events', getEvents);
 server.get('/event/:id', getEvent);
-server.post('/events', postEvents);
+server.post('/event', postEvent);
 
 server.listen(8080, function () {
     console.log('%s listening at %s', server.name, server.url);
