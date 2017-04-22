@@ -46,14 +46,15 @@ var Events = mongoose.model('events');
 
 function getEvents(req, res, next) {
     Events.find().sort('id').exec(function (arr, data) {
-        res.setHeader('Access-Control-Allow-Origin','*')
+        res.setHeader('Access-Control-Allow-Origin', '*')
         res.send(data);
     });
 }
 function getEvent(req, res, next) {
-    Events.find({id:req.params.id}).sort('id').exec(function (arr, data) {
-        res.setHeader('Access-Control-Allow-Origin','*')
-        res.send(data);
+    Events.find({"id": req.params.id}).sort('id').exec(function (arr, data) {
+        res.setHeader('Access-Control-Allow-Origin', '*')
+        console.log(data[0]);
+        res.send(data[0]);
     });
 }
 
