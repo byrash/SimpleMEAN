@@ -72,14 +72,16 @@ function postEvent(req, res, next) {
             }
             event.id = count + 1;
             new Events(event).save(function (err, doc) {
-                console.log("Error:" + err);
-                console.log(doc);
+                if (err) {
+                    console.log("Error:" + err);
+                }
             });
         });
     } else {
         Events.findOneAndUpdate({"id": event.id}, event, options, function (err, doc) {
-            console.log("Error:" + err);
-            console.log(doc);
+            if (err) {
+                console.log("Error:" + err);
+            }
         });
     }
     res.send(event);
@@ -88,7 +90,7 @@ function postEvent(req, res, next) {
 function searchSessions(req, res, next) {
     res.setHeader('Access-Control-Allow-Origin', '*');
     let searchTerm = req.query.searchTerm;
-    Events.find().sort('id').exec(function (err, data) {
+    Events.find({}).sort('id').exec(function (err, data) {
         let searchedSessions = [];
         data.forEach(event => {
             let matchingSessions = event.sessions.filter(session => session.name.toLocaleLowerCase().indexOf(searchTerm) > -1);
@@ -102,12 +104,56 @@ function searchSessions(req, res, next) {
         res.send(searchedSessions);
     });
 }
+let addOrDeleteVoter = function (eventId, sessionId, voterName, isAdd) {
+    Events.find({"id": eventId}).sort('id').exec(function (err, data) {
+        data.forEach(event => {
+            event.sessions.forEach(session => {
+
+                if (session.id == sessionId &&
+                    (
+                        (session.voters.indexOf(voterName) === -1 && isAdd ) ||
+                        (session.voters.indexOf(voterName) > -1 && !isAdd )
+                    )) {
+                    if (isAdd) {
+                        session.voters.push(voterName);
+                    } else {
+                        session.voters.splice(session.voters.indexOf(voterName), 1);
+                    }
+                    Events.findOneAndUpdate({"id": eventId}, event, {}, function (err, data) {
+                        if (err) {
+                            console.log("Error:" + err);
+                        }
+                    });
+                }
+            });
+        });
+    });
+};
+function addVoter(req, res, next) {
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    let eventId = req.params.eventId;
+    let sessionId = req.params.sessionId;
+    let voterName = req.params.voterName;
+    addOrDeleteVoter(eventId, sessionId, voterName, true);
+    res.send('');
+}
+
+function deleteVoter(req, res, next) {
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    let eventId = req.params.eventId;
+    let sessionId = req.params.sessionId;
+    let voterName = req.params.voterName;
+    addOrDeleteVoter(eventId, sessionId, voterName, false);
+    res.send('');
+}
 
 // Set up our routes and start the server
 server.get('/events', getEvents);
 server.get('/event/:id', getEvent);
 server.post('/event', postEvent);
 server.get('/sessions/search', searchSessions);
+server.post('/event/:eventId/sessions/:sessionId/voters/:voterName', addVoter);
+server.del('/event/:eventId/sessions/:sessionId/voters/:voterName', deleteVoter);
 
 server.listen(8080, function () {
     console.log('%s listening at %s', server.name, server.url);
