@@ -147,6 +147,18 @@ function deleteVoter(req, res, next) {
     res.send('');
 }
 
+function login(req, res, next) {
+    res.setHeader('Access-Control-Allow-Origin', '*')
+    var loginData = JSON.parse(req.body);
+    let user = {id: '1', firstName: 'Shivaji', 'lastName': 'Byrapaneni', 'userName': 'Shiv'};
+    if (loginData.uname === 'Shiv' && loginData.pwd === 'Shiv') {
+        res.send(user);
+    }
+    else {
+        return next(new restify.ForbiddenError("Not this time"));
+    }
+}
+
 // Set up our routes and start the server
 server.get('/events', getEvents);
 server.get('/event/:id', getEvent);
@@ -154,6 +166,7 @@ server.post('/event', postEvent);
 server.get('/sessions/search', searchSessions);
 server.post('/event/:eventId/sessions/:sessionId/voters/:voterName', addVoter);
 server.del('/event/:eventId/sessions/:sessionId/voters/:voterName', deleteVoter);
+server.post('/login', login);
 
 server.listen(8080, function () {
     console.log('%s listening at %s', server.name, server.url);
