@@ -146,17 +146,42 @@ function deleteVoter(req, res, next) {
     addOrDeleteVoter(eventId, sessionId, voterName, false);
     res.send('');
 }
-
+var isAuthenticated = false;
+var user = {id: '1', firstName: 'Shivaji', 'lastName': 'Byrapaneni', 'userName': 'Shiv'};
 function login(req, res, next) {
-    res.setHeader('Access-Control-Allow-Origin', '*')
+    res.setHeader('Access-Control-Allow-Origin', '*');
     var loginData = JSON.parse(req.body);
-    let user = {id: '1', firstName: 'Shivaji', 'lastName': 'Byrapaneni', 'userName': 'Shiv'};
     if (loginData.uname === 'Shiv' && loginData.pwd === 'Shiv') {
+        isAuthenticated = true;
         res.send(user);
     }
     else {
         return next(new restify.ForbiddenError("Not this time"));
     }
+}
+
+function identify(req, res, next) {
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    if (isAuthenticated) {
+        res.send(user);
+    } else {
+        res.send({});
+    }
+}
+
+function updateUser(req, res, next) {
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    let userId = req.params.userId;
+    if (user.id === userId) {
+        user = req.body;
+    }
+    res.send({});
+}
+
+function logout(req, res, next) {
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    isAuthenticated = false;
+    res.send({});
 }
 
 // Set up our routes and start the server
@@ -167,6 +192,9 @@ server.get('/sessions/search', searchSessions);
 server.post('/event/:eventId/sessions/:sessionId/voters/:voterName', addVoter);
 server.del('/event/:eventId/sessions/:sessionId/voters/:voterName', deleteVoter);
 server.post('/login', login);
+server.get('/identify', identify);
+server.put('/user/:userId', updateUser);
+server.post('/logout', logout);
 
 server.listen(8080, function () {
     console.log('%s listening at %s', server.name, server.url);
